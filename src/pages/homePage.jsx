@@ -1,15 +1,12 @@
-import React from 'react'
-import Home from '../components/MISDashboard'
-import Sidebar from '../components/sideBar'
+import React from "react";
+import Dashboard from "../components/Dashboard/Dashboard";
+
 export default function homePage() {
-   
-    return (
-      <>
-      <div className='flex'>
-      <Sidebar/>
-      <Home/>
-      </div>
-      
-      </>
-    );
-  }
+  return (
+    <>
+
+        <Dashboard />
+
+    </>
+  );
+}
