@@ -452,15 +452,15 @@ export default function Division() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cost Center Meaning
+                  Cost Center (Making)
                 </label>
                 <input
                   type="text"
-                  name="costCenterMeaning"
+                  name="costCenterMaking"
                   value={formData.costCenterMeaning}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border-none outline-none rounded-xl focus:ring-4 focus:ring-blue-100 transition-all duration-300 bg-gray-50 hover:bg-white focus:bg-white shadow-sm hover:shadow-md focus:shadow-lg placeholder-gray-400"
-                  placeholder="Enter cost center meaning"
+                  placeholder="Enter cost center (Making)"
                 />
               </div>
 
