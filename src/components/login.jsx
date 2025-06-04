@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
+// import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { motion } from "framer-motion";
 import goldBarImage from "../assets/GoldBar.jpg";
 import axios from '../api/axios';
+import { Toaster, toast } from 'sonner';
 
 const LoginPage = () => {
-  const [userName, setUserName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [userNameError, setUserNameError] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -29,7 +30,7 @@ const LoginPage = () => {
       try {
         // Verify the token with the backend
         const response = await axios.post("/verify-token", { token });
-        
+
         // Check if valid admin in response
         if (response.data.admin) {
           // Token is valid, navigate to dashboard
@@ -41,7 +42,7 @@ const LoginPage = () => {
       } catch (error) {
         console.error("Token verification error:", error);
         handleLogout();
-        
+
         // Show error message if service expired
         const errorResponse = error.response?.data;
         if (errorResponse && errorResponse.serviceExpired) {
@@ -65,54 +66,56 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     // Clear previous errors
-    setUserNameError("");
+    setEmailError("");
     setPasswordError("");
-    
+
     // Simple validation
-    if (!userName) {
-      setUserNameError("Username is required");
+    if (!email) {
+      setEmailError("email is required");
       setIsLoading(false);
       return;
     }
-    
+
     if (!password) {
       setPasswordError("Password is required");
       setIsLoading(false);
       return;
     }
-    
+
     try {
       // Call the login API endpoint using axios
       const response = await axios.post('/login', {
-        userName,
+        email,
         password,
         rememberMe
       });
-      
+
       const responseData = response.data;
-      
+
       if (responseData.success) {
         // Login successful
         toast.success(responseData.message || "Login Successful", {
           position: "top-right",
           autoClose: 2000,
         });
-        
+
         // Get admin data and token from response
-        const { admin, token } = responseData.data;
-        
+        const { admin, accessToken,refreshToken } = responseData.data;
+
+        localStorage.setItem("token", accessToken);
+        localStorage.setItem("refreshToken", refreshToken);
+
         // Save auth data to localStorage
-        localStorage.setItem("token", token);
         localStorage.setItem("adminId", admin._id);
-        
+
         // Save username if remember me is checked
         if (rememberMe) {
-          localStorage.setItem("userName", userName);
+          localStorage.setItem("email", email);
           localStorage.setItem("rememberMe", "true");
         }
-        
+
         // Navigate to dashboard after toast
         setTimeout(() => {
           navigate("/dashboard");
@@ -121,14 +124,14 @@ const LoginPage = () => {
         // Handle API success: false response
         setPasswordError(responseData.message || "Login failed");
       }
-      
+
     } catch (error) {
       // Handle errors
       if (error.response) {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         const errorData = error.response.data;
-        
+
         if (!errorData.success) {
           setPasswordError(errorData.message || errorData.error || "Invalid credentials");
         } else {
@@ -149,11 +152,11 @@ const LoginPage = () => {
 
   // Set remembered username if available
   useEffect(() => {
-    const rememberedUser = localStorage.getItem("userName");
+    const rememberedUser = localStorage.getItem("email");
     const isRemembered = localStorage.getItem("rememberMe") === "true";
-    
+
     if (rememberedUser && isRemembered) {
-      setUserName(rememberedUser);
+      setEmailError(rememberedUser);
       setRememberMe(true);
     }
   }, []);
@@ -169,10 +172,10 @@ const LoginPage = () => {
 
   return (
     <div className="flex h-screen w-full bg-gray-50 overflow-hidden">
-      <ToastContainer />
-      
+      {/* <ToastContainer /> */}
+
       {/* Left side - Login Form */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.8 }}
@@ -192,7 +195,7 @@ const LoginPage = () => {
             </p>
           </motion.div>
 
-          <motion.form 
+          <motion.form
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 0.5 }}
@@ -201,18 +204,18 @@ const LoginPage = () => {
           >
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Username 
+                email
               </label>
               <div className="relative">
                 <input
                   type="text"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter your username"
+                  placeholder="Enter your email"
                 />
-                {userNameError && (
-                  <p className="text-red-500 text-xs mt-1">{userNameError}</p>
+                {emailError && (
+                  <p className="text-red-500 text-xs mt-1">{emailError}</p>
                 )}
               </div>
             </div>
@@ -277,9 +280,8 @@ const LoginPage = () => {
               type="submit"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`w-full py-3 px-4 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-medium text-sm uppercase tracking-wider shadow-lg hover:shadow-xl transition-all flex justify-center items-center ${
-                isLoading ? "opacity-75 cursor-wait" : ""
-              }`}
+              className={`w-full py-3 px-4 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-medium text-sm uppercase tracking-wider shadow-lg hover:shadow-xl transition-all flex justify-center items-center ${isLoading ? "opacity-75 cursor-wait" : ""
+                }`}
               disabled={isLoading}
             >
               {isLoading ? (
@@ -293,9 +295,9 @@ const LoginPage = () => {
           </motion.form>
         </div>
       </motion.div>
-      
+
       {/* Right side - Gold Image */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1.2 }}
@@ -313,9 +315,9 @@ const LoginPage = () => {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-cyan-500/20" />
-        
+
         <div className="absolute bottom-10 left-10 text-white max-w-xs">
-          <motion.h2 
+          <motion.h2
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.6 }}
@@ -333,6 +335,18 @@ const LoginPage = () => {
           </motion.p>
         </div>
       </motion.div>
+      <Toaster
+        position="bottom-left"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: '#000',
+          },
+        }}
+      />
+
+
     </div>
   );
 };
